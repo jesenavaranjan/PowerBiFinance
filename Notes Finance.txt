@@ -1,0 +1,166 @@
+https://altiusbeta.sharepoint.com/sites/PowerBIConsultants/Lists/JN%20Finance%20List/AllItems.aspx
+
+------------------
+ClearCollect(AccountsList,
+{Result:"Amortization of Goodwill"},
+{Result:"Building Leasehold"},
+{Result:"Commissions"}
+,
+{Result:"Conferences"}
+,
+{Result:"Curr Xchg Gain/(Loss)"}
+,
+{Result:"Discounts"}
+,
+{Result:"Employee Benefits"}
+,
+{Result:"Entertainment"}
+,
+{Result:"Equipment"}
+,
+{Result:"Furniture and Fixtures"}
+,
+{Result:"Gain/Loss on Sales of Asset"}
+,
+{Result:"Intercompany Sales"}
+,
+{Result:"Interest Expense"}
+,
+{Result:"Interest Income"}
+,
+{Result:"Marketing Collateral"}
+,
+{Result:"Meals"}
+,
+{Result:"Office Supplies"}
+,
+{Result:"Other Assets"}
+,
+{Result:"Other Expenses"}
+,
+{Result:"Other Income"}
+,
+{Result:"Other Travel Related"}
+,
+{Result:"Payroll Taxes"}
+,
+{Result:"Professional Services"}
+,
+{Result:"Rent"}
+,
+{Result:"Returns and Adjustments"}
+,
+{Result:"Salaries"}
+,
+{Result:"Standard Cost of Sales"}
+,
+{Result:"Taxes"}
+,
+{Result:"Telephone"}
+,
+{Result:"Trade Sales"}
+,
+{Result:"Travel Lodging"}
+,
+{Result:"Travel Transportation"}
+,
+{Result:"Utilities"}
+,
+{Result:"Variances"}
+,
+{Result:"Vehicles"})
+
+-----------------------------------
+ClearCollect(tempcollllist,'JN Finance List');Set(MaxID,Max(tempcollllist,Index))
+-----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//1. Collect items from gallery into Temp Collection
+
+ClearCollect(
+    temcoll,
+    ForecastGallery.AllItems
+);
+
+//2. Set MAX ID to utilise in sending data
+Set(
+    MaxID,
+    Max(
+        tempcollllist,
+        Index
+    )
+);
+
+//3. Build collectiontemplate
+ClearCollect(
+    TableTempx,
+    {
+        Title: MaxID + 1,
+        Index: MaxID + 1,
+        EntryDate: Today(),
+        AccountType: "xx",
+        ForecastPrediction: 0,
+        Commentary: "xx"
+    }
+);
+
+//4. Collect items from gallery into Collection template
+ForAll(
+    temcoll,
+    Patch(
+        TableTempx,
+        Defaults(TableTempx),
+        {
+            Title: MaxID + 1,
+            Index: MaxID + 1,
+            EntryDate: Today(),
+            AccountType: AccountName.Text,
+            Commentary: Commentary.Text,
+            ForecastPrediction: Value(ForecastPredictionDropdown.SelectedText.Value)
+        }
+    )
+);
+//5. RemoveItem which is not needed
+ClearCollect(
+    TableTemp2,
+    RemoveIf(
+        TableTempx,
+        AccountType = "xx"
+    )
+);
+
+//6. Save data using Patch to sharepoint List
+
+ForAll(
+    TableTemp2,
+    Patch(
+        'JN Finance List',
+        Defaults('JN Finance List'),
+        {
+            Title: Title,
+            Index: Index,
+            EntryDate: EntryDate,
+            Commentary: Commentary,
+            ForecastPrediction: ForecastPrediction,
+            AccountType: AccountType
+        }
+    )
+);
+//7. Refresh using Power Automate
+RefreshFinanceDataset.Run()
